@@ -42,7 +42,7 @@ services:
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=postgres
     ports:
-      - '5433:5433'
+      - '5438:5432'
     volumes:
       - db2:/var/lib/postgresql/data
 
