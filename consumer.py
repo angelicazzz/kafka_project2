@@ -68,6 +68,9 @@ class KafkaPostgresConsumer:
                     """, (data[0],))
                 conn.commit()
 
+                # Commit the offset of the processed message
+                consumer.commit(message=msg)
+
                 
         except KeyboardInterrupt:
             pass
