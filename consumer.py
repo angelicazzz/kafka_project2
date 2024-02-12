@@ -18,7 +18,7 @@ class KafkaPostgresConsumer:
         conf = {
             'bootstrap.servers': self.kafka_bootstrap_servers,
             'group.id': 'my_consumer_group',
-            'auto.offset.reset': 'latest'
+            'auto.offset.reset': 'earliest'
         }
 
         consumer = Consumer(conf)
@@ -37,6 +37,7 @@ class KafkaPostgresConsumer:
         try:
             while True:
                 msg = consumer.poll(1.0)
+                print("<<<<<msg:",msg)
                 if msg is None:
                     continue
                 if msg.error():
@@ -50,37 +51,24 @@ class KafkaPostgresConsumer:
                 data = ast.literal_eval(msg.value().decode('utf-8'))
                 print("Kafka data here <<<<<<<<<<<<<<<<<<<<<<<<<<<", data)
 
-                # Insert the parsed data into PostgreSQL
-                cur.execute("""
-                    INSERT INTO employees (emp_id, first_name, last_name, dob, city) 
-                    VALUES (%s, %s, %s, %s, %s)
-                """, (data[0], data[1], data[2], data[3], data[4]))
+                if data[5] == 'INSERT':
+                    cur.execute("""
+                        INSERT INTO employees (emp_id, first_name, last_name, dob, city) 
+                        VALUES (%s, %s, %s, %s, %s)
+                    """, (data[0], data[1], data[2], data[3], data[4]))
+                elif data[5] == 'UPDATE':
+                    cur.execute("""
+                        UPDATE employees 
+                        SET first_name = %s, last_name = %s, dob = %s, city = %s
+                        WHERE emp_id = %s
+                    """, (data[1], data[2], data[3], data[4],data[0]))
+                elif data[5] == 'DELETE':
+                    cur.execute("""
+                        DELETE FROM employees WHERE emp_id = %s
+                    """, (data[0],))
                 conn.commit()
 
-                # Parse message
-                # message_data = msg.value().decode('utf-8')
-                # emp_id, first_name, last_name, dob, city, action = message_data.split(',')
-
-                # # Apply changes to employee_B table
-                # with psycopg2.connect(self.db_connection_string) as conn:
-                #     with conn.cursor() as cur:
-                #         if data[5] == 'INSERT':
-                #             cur.execute("""
-                #                 INSERT INTO employees (emp_id, first_name, last_name, dob, city) 
-                #                 VALUES (%s, %s, %s, %s, %s)
-                #             """, (data[0], data[1], data[2], data[3], data[4]))
-                #         elif data[5] == 'UPDATE':
-                #             cur.execute("""
-                #                 UPDATE employees 
-                #                 SET first_name = %s, last_name = %s, dob = %s, city = %s
-                #                 WHERE emp_id = %s
-                #             """, (data[1], data[2], data[3], data[4],data[0]))
-                #         elif action == 'DELETE':
-                #             cur.execute("""
-                #                 DELETE FROM employees WHERE emp_id = %s
-                #             """, (data[0],))
-                #         conn.commit()
-
+                
         except KeyboardInterrupt:
             pass
 
