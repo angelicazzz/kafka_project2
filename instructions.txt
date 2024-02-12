@@ -81,3 +81,6 @@ city VARCHAR(100) );
 After creating table schema in both databases, need to setup connection with Kafka offset explorer
 Run producer.py to broadcast changes in DB1 to Kafka (need to run every time after changes made)
 Run consumer.py to stream and synchronize changes in DB2 from Kafka
+
+To connect a SQL script, need to open it and connect database on the top of console from N/A to target DB
+
